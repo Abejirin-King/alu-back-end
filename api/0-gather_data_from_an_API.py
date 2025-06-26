@@ -17,8 +17,7 @@ def fetch_employee_todo_progress(employee_id):
     user_data = user_response.json()
     employee_name = user_data.get("name")
 
-    todos_url = f"{base_url}/todos"
-    todos_response = requests.get(todos_url, params={"userId": employee_id})
+    todos_response = requests.get(f"{base_url}/todos", params={"userId": employee_id})
     todos = todos_response.json()
 
     total_tasks = len(todos)
