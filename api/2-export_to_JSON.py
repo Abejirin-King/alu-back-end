@@ -1,35 +1,56 @@
 #!/usr/bin/python3
 """
-using a REST API and an EMP_ID, save info about their TODO list in a json file
+    python script that exports data in the JSON format
 """
 import json
 import requests
-import sys
+from sys import argv
 
 if __name__ == "__main__":
-    """ Main section """
-    BASE_URL = 'https://jsonplaceholder.typicode.com'
-    employee_id = sys.argv[1] if len(sys.argv) > 1 else None
+    """
+        request user info by employee ID
+    """
+    request_employee = requests.get(
+        'https://jsonplaceholder.typicode.com/users/{}/'.format(argv[1]))
+    """
+        convert json to dictionary
+    """
+    user = json.loads(request_employee.text)
+    """
+        extract username
+    """
+    username = user.get("username")
 
-    if not employee_id:
-        print("Please provide an employee ID as an argument.")
-        sys.exit(1)
+    """
+        request user's TODO list
+    """
+    request_todos = requests.get(
+        'https://jsonplaceholder.typicode.com/todos?userId={}'.format(argv[1]))
+    """
+        dictionary to store task status(completed) in boolean format
+    """
+    tasks = {}
+    """
+        convert json to list of dictionaries
+    """
+    user_todos = json.loads(request_todos.text)
+    """
+        loop through dictionary & get completed tasks
+    """
+    for dictionary in user_todos:
+        tasks.update({dictionary.get("title"): dictionary.get("completed")})
 
-    employee = requests.get(f"{BASE_URL}/users/{employee_id}/").json()
-    employee_name = employee.get("username")
-    emp_todos = requests.get(f"{BASE_URL}/users/{employee_id}/todos").json()
-    serialized_todos = []
-
-    for todo in emp_todos:
-        serialized_todos.append({
-            "task": todo.get("title"),
-            "completed": todo.get("completed"),
-            "username": employee_name
+    task_list = []
+    for k, v in tasks.items():
+        task_list.append({
+            "task": k,
+            "completed": v,
+            "username": username
         })
 
-    output_data = {employee_id: serialized_todos}
-
-    with open(f"{employee_id}.json", 'w') as file:
-        json.dump(output_data, file, indent=4)
-
-    print(f"Tasks for employee {employee_id} exported to {file_name}.")
+    json_to_dump = {argv[1]: task_list}
+    """
+        export to JSON
+    """
+    with open('{}.json'.format(argv[1]), mode='w') as file:
+        json.dump(json_to_dump, file)
